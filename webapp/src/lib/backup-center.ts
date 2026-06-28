@@ -51,7 +51,7 @@ export function detectBrowserTimeZone(): string {
 }
 
 function createLocalizedDestinationName(type: BackupDestinationType, index: number): string {
-  if (type === 'e3') return t('txt_backup_destination_name_default_e3', { index: String(index) });
+  if (type === 's3') return t('txt_backup_destination_name_default_s3', { index: String(index) });
   return t('txt_backup_destination_name_default_webdav', { index: String(index) });
 }
 
@@ -100,9 +100,12 @@ function getRemoteItemSortTime(item: RemoteBackupItem): number {
 }
 
 export function compareRemoteItems(a: RemoteBackupItem, b: RemoteBackupItem): number {
+  const aIsAttachmentsDir = a.isDirectory && a.name === 'attachments';
+  const bIsAttachmentsDir = b.isDirectory && b.name === 'attachments';
+  if (aIsAttachmentsDir !== bIsAttachmentsDir) return aIsAttachmentsDir ? -1 : 1;
+  if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
   const timeDiff = getRemoteItemSortTime(b) - getRemoteItemSortTime(a);
   if (timeDiff !== 0) return timeDiff;
-  if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
   return b.name.localeCompare(a.name, 'en');
 }
 
@@ -204,6 +207,6 @@ export function getFirstVisibleDestinationId(settings: BackupSettings | null | u
 }
 
 export function getDestinationTypeLabel(type: BackupDestinationType): string {
-  if (type === 'e3') return t('txt_backup_protocol_e3');
+  if (type === 's3') return t('txt_backup_protocol_s3');
   return t('txt_backup_protocol_webdav');
 }

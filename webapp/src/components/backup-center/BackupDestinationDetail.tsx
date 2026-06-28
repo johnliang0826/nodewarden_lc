@@ -1,14 +1,18 @@
 import { CloudUpload, Save, Trash2 } from 'lucide-preact';
 import type {
   BackupDestinationRecord,
-  E3BackupDestination,
   RemoteBackupBrowserResponse,
+  S3BackupAddressingStyle,
+  S3BackupDestination,
   WebDavBackupDestination,
 } from '@/lib/api/backup';
-import { COMMON_TIME_ZONES, WEEKDAY_OPTIONS, getDestinationTypeLabel } from '@/lib/backup-center';
+import { COMMON_TIME_ZONES, getDestinationTypeLabel } from '@/lib/backup-center';
 import type { RecommendedProvider } from '@/lib/backup-recommendations';
 import { RemoteBackupBrowser } from './RemoteBackupBrowser';
 import { t } from '@/lib/i18n';
+import { BackupIncludeAttachmentsField } from './BackupIncludeAttachmentsField';
+
+const INTERVAL_HOUR_PRESETS = [1, 6, 12, 24];
 
 interface BackupDestinationDetailProps {
   selectedRecommendedProvider: RecommendedProvider | null;
@@ -50,21 +54,18 @@ function renderRecommendedProviderDetails(provider: RecommendedProvider) {
         <>
           <div className="backup-recommendation-steps">
             <div className="backup-recommendation-step">
-              <strong>1.</strong> {t('txt_backup_recommend_koofr_step_1')}
-            </div>
-            <div className="backup-recommendation-step">
-              <strong>2.</strong> {t('txt_backup_recommend_koofr_step_2_prefix')}{' '}
+              <strong>1.</strong> {t('txt_backup_recommend_koofr_step_2_prefix')}{' '}
               <a href={provider.passwordUrl} target="_blank" rel="noreferrer">{t('txt_backup_recommend_koofr_password_link')}</a>
               {t('txt_backup_recommend_koofr_step_2_suffix')}
             </div>
             <div className="backup-recommendation-step">
-              <strong>3.</strong> {t('txt_backup_recommend_koofr_step_3')}
+              <strong>2.</strong> {t('txt_backup_recommend_koofr_step_3')}
             </div>
             <div className="backup-recommendation-step">
-              <strong>4.</strong> {t('txt_backup_recommend_koofr_step_4')}
+              <strong>3.</strong> {t('txt_backup_recommend_koofr_step_4')}
             </div>
             <div className="backup-recommendation-step">
-              <strong>5.</strong> {t('txt_backup_recommend_koofr_step_5_prefix')}{' '}
+              <strong>4.</strong> {t('txt_backup_recommend_koofr_step_5_prefix')}{' '}
               <a href={provider.storageUrl} target="_blank" rel="noreferrer">{t('txt_backup_recommend_koofr_storage_link')}</a>
               {t('txt_backup_recommend_koofr_step_5_suffix')}
             </div>
@@ -94,13 +95,10 @@ function renderRecommendedProviderDetails(provider: RecommendedProvider) {
       return (
         <div className="backup-recommendation-steps">
           <div className="backup-recommendation-step">
-            <strong>1.</strong> {t('txt_backup_recommend_pcloud_step_1')}
+            <strong>1.</strong> {t('txt_backup_recommend_pcloud_step_2')}
           </div>
           <div className="backup-recommendation-step">
-            <strong>2.</strong> {t('txt_backup_recommend_pcloud_step_2')}
-          </div>
-          <div className="backup-recommendation-step">
-            <strong>3.</strong> {t('txt_backup_recommend_pcloud_step_3')}
+            <strong>2.</strong> {t('txt_backup_recommend_pcloud_step_3')}
           </div>
         </div>
       );
@@ -108,18 +106,87 @@ function renderRecommendedProviderDetails(provider: RecommendedProvider) {
       return (
         <div className="backup-recommendation-steps">
           <div className="backup-recommendation-step">
-            <strong>1.</strong> {t('txt_backup_recommend_infinicloud_step_1')}
-          </div>
-          <div className="backup-recommendation-step">
-            <strong>2.</strong> {t('txt_backup_recommend_infinicloud_step_2_prefix')}{' '}
+            <strong>1.</strong> {t('txt_backup_recommend_infinicloud_step_2_prefix')}{' '}
             <a href="https://infini-cloud.net/en/modules/mypage/usage/" target="_blank" rel="noreferrer">My Page</a>
             {t('txt_backup_recommend_infinicloud_step_2_suffix')}
           </div>
           <div className="backup-recommendation-step">
-            <strong>3.</strong> {t('txt_backup_recommend_infinicloud_step_3')}
+            <strong>2.</strong> {t('txt_backup_recommend_infinicloud_step_3')}
           </div>
           <div className="backup-recommendation-step">
-            <strong>4.</strong> {t('txt_backup_recommend_infinicloud_step_4')}
+            <strong>3.</strong> {t('txt_backup_recommend_infinicloud_step_4')}
+          </div>
+        </div>
+      );
+    case 'backblaze-b2':
+      return (
+        <div className="backup-recommendation-steps">
+          <div className="backup-recommendation-step">
+            <strong>1.</strong> {t('txt_backup_recommend_backblaze_step_2_prefix')}{' '}
+            <a href={provider.bucketsUrl} target="_blank" rel="noreferrer">Buckets</a>
+            {t('txt_backup_recommend_backblaze_step_2_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>2.</strong> {t('txt_backup_recommend_backblaze_step_3')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>3.</strong> {t('txt_backup_recommend_backblaze_step_4_prefix')}{' '}
+            <a href={provider.applicationKeysUrl} target="_blank" rel="noreferrer">Application Keys</a>
+            {t('txt_backup_recommend_backblaze_step_4_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>4.</strong> {t('txt_backup_recommend_backblaze_step_5')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>5.</strong> {t('txt_backup_recommend_s3_path_prefix_step')}
+          </div>
+        </div>
+      );
+    case 'cloudflare-r2':
+      return (
+        <div className="backup-recommendation-steps">
+          <div className="backup-recommendation-step">
+            <strong>1.</strong> {t('txt_backup_recommend_cloudflare_r2_step_1_prefix')}{' '}
+            <a href={provider.bucketUrl} target="_blank" rel="noreferrer">{t('txt_backup_recommend_cloudflare_r2_bucket_link')}</a>
+            {t('txt_backup_recommend_cloudflare_r2_step_1_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>2.</strong> {t('txt_backup_recommend_cloudflare_r2_step_2_prefix')}{' '}
+            <a href={provider.apiTokenUrl} target="_blank" rel="noreferrer">{t('txt_backup_recommend_cloudflare_r2_api_link')}</a>
+            {t('txt_backup_recommend_cloudflare_r2_step_2_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>3.</strong> {t('txt_backup_recommend_cloudflare_r2_step_3')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>4.</strong> {t('txt_backup_recommend_cloudflare_r2_step_4')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>5.</strong> {t('txt_backup_recommend_cloudflare_r2_step_5')}
+          </div>
+        </div>
+      );
+    case 'tigris':
+      return (
+        <div className="backup-recommendation-steps">
+          <div className="backup-recommendation-step">
+            <strong>1.</strong> {t('txt_backup_recommend_tigris_step_2_prefix')}{' '}
+            <a href={provider.bucketUrl} target="_blank" rel="noreferrer">Create Bucket</a>
+            {t('txt_backup_recommend_tigris_step_2_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>2.</strong> {t('txt_backup_recommend_tigris_step_3_prefix')}{' '}
+            <a href={provider.accessKeyUrl} target="_blank" rel="noreferrer">{t('txt_backup_recommend_tigris_access_key_link')}</a>
+            {t('txt_backup_recommend_tigris_step_3_suffix')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>3.</strong> {t('txt_backup_recommend_tigris_step_4')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>4.</strong> {t('txt_backup_recommend_tigris_step_5')}
+          </div>
+          <div className="backup-recommendation-step">
+            <strong>5.</strong> {t('txt_backup_recommend_s3_path_prefix_step')}
           </div>
         </div>
       );
@@ -131,6 +198,7 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
     ...COMMON_TIME_ZONES,
     ...props.availableTimeZones,
   ]));
+  const selectedIntervalHours = props.selectedDestination?.schedule.intervalHours ?? 24;
 
   if (props.selectedRecommendedProvider) {
     return (
@@ -142,6 +210,9 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
               <div className="backup-inline-note">
                 {props.selectedRecommendedProvider.id === 'infinicloud' ? t('txt_backup_recommend_infinicloud_summary')
                   : props.selectedRecommendedProvider.id === 'koofr' ? t('txt_backup_recommend_koofr_summary')
+                    : props.selectedRecommendedProvider.id === 'backblaze-b2' ? t('txt_backup_recommend_backblaze_summary')
+                      : props.selectedRecommendedProvider.id === 'cloudflare-r2' ? t('txt_backup_recommend_cloudflare_r2_summary')
+                        : props.selectedRecommendedProvider.id === 'tigris' ? t('txt_backup_recommend_tigris_summary')
                     : t('txt_backup_recommend_pcloud_summary')}
               </div>
             </div>
@@ -205,38 +276,67 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
 
           <div className="field-grid backup-detail-schedule-grid">
             <label className="field">
-              <span>{t('txt_backup_frequency')}</span>
-              <select
-                className="input"
-                value={props.selectedDestination.schedule.frequency}
-                disabled={props.loadingSettings || props.disableWhileBusy}
-                onChange={(event) => props.onUpdateDestination((destination) => ({
-                  ...destination,
-                  schedule: {
-                    ...destination.schedule,
-                    frequency: (event.currentTarget as HTMLSelectElement).value as 'daily' | 'weekly' | 'monthly',
-                    dayOfWeek: destination.schedule.dayOfWeek ?? 1,
-                    dayOfMonth: destination.schedule.dayOfMonth ?? 1,
-                  },
-                }))}
-              >
-                <option value="daily">{t('txt_backup_frequency_daily')}</option>
-                <option value="weekly">{t('txt_backup_frequency_weekly')}</option>
-                <option value="monthly">{t('txt_backup_frequency_monthly')}</option>
-              </select>
+              <span>{t('txt_backup_interval_hours')}</span>
+              <div className="backup-interval-row">
+                <div className="backup-inline-suffix-wrap">
+                  <input
+                    className="input backup-inline-suffix-input"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={String(selectedIntervalHours)}
+                    disabled={props.loadingSettings || props.disableWhileBusy}
+                    onInput={(event) => {
+                      const raw = (event.currentTarget as HTMLInputElement).value.replace(/[^\d]/g, '');
+                      const value = Math.min(99, Math.max(1, Number(raw || 1)));
+                      props.onUpdateDestination((destination) => ({
+                        ...destination,
+                        schedule: {
+                          ...destination.schedule,
+                          intervalHours: value,
+                        },
+                      }));
+                    }}
+                  />
+                  <span className="backup-inline-suffix">{t('txt_backup_interval_hours_suffix')}</span>
+                </div>
+                <div className="backup-interval-presets" aria-label={t('txt_backup_interval_hours_presets')}>
+                  {INTERVAL_HOUR_PRESETS.map((preset) => {
+                    const active = preset === selectedIntervalHours;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`backup-interval-preset${active ? ' active' : ''}`}
+                        disabled={props.loadingSettings || props.disableWhileBusy}
+                        onClick={() => props.onUpdateDestination((destination) => ({
+                          ...destination,
+                          schedule: {
+                            ...destination.schedule,
+                            intervalHours: preset,
+                          },
+                        }))}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </label>
             <label className="field">
-              <span>{t('txt_backup_time')}</span>
+              <span>{t('txt_backup_start_time')}</span>
               <input
                 className="input"
                 type="time"
-                value={props.selectedDestination.schedule.scheduleTime}
+                step={300}
+                value={props.selectedDestination.schedule.startTime || '03:00'}
                 disabled={props.loadingSettings || props.disableWhileBusy}
                 onInput={(event) => props.onUpdateDestination((destination) => ({
                   ...destination,
                   schedule: {
                     ...destination.schedule,
-                    scheduleTime: (event.currentTarget as HTMLInputElement).value,
+                    startTime: (event.currentTarget as HTMLInputElement).value || '03:00',
                   },
                 }))}
               />
@@ -262,17 +362,17 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
             </label>
             <label className="field">
               <span>{t('txt_backup_retention_count')}</span>
-              <div className="backup-retention-input">
+              <div className="backup-inline-suffix-wrap">
                 <input
-                  className="input"
-                  type="number"
-                  min="1"
-                  step="1"
+                  className="input backup-inline-suffix-input"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={props.selectedDestination.schedule.retentionCount === null ? '' : String(props.selectedDestination.schedule.retentionCount)}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   placeholder="30"
                   onInput={(event) => {
-                    const nextValue = (event.currentTarget as HTMLInputElement).value.trim();
+                    const nextValue = (event.currentTarget as HTMLInputElement).value.replace(/[^\d]/g, '').trim();
                     props.onUpdateDestination((destination) => ({
                       ...destination,
                       schedule: {
@@ -282,58 +382,21 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
                     }));
                   }}
                 />
-                <span className="backup-retention-suffix">{t('txt_backup_retention_count_suffix')}</span>
+                <span className="backup-inline-suffix">{t('txt_backup_retention_count_suffix')}</span>
               </div>
             </label>
           </div>
 
-          {props.selectedDestination.schedule.frequency === 'weekly' ? (
-            <div className="field-grid backup-detail-schedule-extra-grid">
-              <label className="field">
-                <span>{t('txt_backup_day_of_week')}</span>
-                <select
-                  className="input"
-                  value={String(props.selectedDestination.schedule.dayOfWeek)}
-                  disabled={props.loadingSettings || props.disableWhileBusy}
-                  onChange={(event) => props.onUpdateDestination((destination) => ({
-                    ...destination,
-                    schedule: {
-                      ...destination.schedule,
-                      dayOfWeek: Number((event.currentTarget as HTMLSelectElement).value),
-                    },
-                  }))}
-                >
-                  {WEEKDAY_OPTIONS.map((option) => (
-                    <option key={option.value} value={String(option.value)}>{t(option.label)}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          ) : null}
-
-          {props.selectedDestination.schedule.frequency === 'monthly' ? (
-            <div className="field-grid backup-detail-schedule-extra-grid">
-              <label className="field">
-                <span>{t('txt_backup_day_of_month')}</span>
-                <input
-                  className="input"
-                  type="number"
-                  min="1"
-                  max="31"
-                  step="1"
-                  value={String(props.selectedDestination.schedule.dayOfMonth || 1)}
-                  disabled={props.loadingSettings || props.disableWhileBusy}
-                  onInput={(event) => props.onUpdateDestination((destination) => ({
-                    ...destination,
-                    schedule: {
-                      ...destination.schedule,
-                      dayOfMonth: Math.min(31, Math.max(1, Number((event.currentTarget as HTMLInputElement).value) || 1)),
-                    },
-                  }))}
-                />
-              </label>
-            </div>
-          ) : null}
+          <div className="backup-schedule-attachments-row">
+            <BackupIncludeAttachmentsField
+              checked={props.selectedDestination.includeAttachments}
+              disabled={props.loadingSettings || props.disableWhileBusy}
+              onChange={(checked) => props.onUpdateDestination((destination) => ({
+                ...destination,
+                includeAttachments: checked,
+              }))}
+            />
+          </div>
 
           {props.selectedDestination.type === 'webdav' ? (
             <div className="field-grid">
@@ -390,7 +453,7 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
                   className="input"
                   value={(props.selectedDestination.destination as WebDavBackupDestination).remotePath}
                   disabled={props.loadingSettings || props.disableWhileBusy}
-                  placeholder="nodewarden/backups"
+                  placeholder="nodewarden"
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
@@ -403,97 +466,115 @@ export function BackupDestinationDetail(props: BackupDestinationDetailProps) {
             </div>
           ) : null}
 
-          {props.selectedDestination.type === 'e3' ? (
+          {props.selectedDestination.type === 's3' ? (
             <div className="field-grid">
-              <label className="field field-span-2">
-                <span>{t('txt_backup_e3_endpoint')}</span>
+              <label className="field">
+                <span>{t('txt_backup_s3_endpoint')}</span>
                 <input
                   className="input"
-                  value={(props.selectedDestination.destination as E3BackupDestination).endpoint}
+                  value={(props.selectedDestination.destination as S3BackupDestination).endpoint}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   placeholder="https://s3.example.com"
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       endpoint: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}
                 />
               </label>
               <label className="field">
-                <span>{t('txt_backup_e3_bucket')}</span>
+                <span>{t('txt_backup_s3_addressing_style')}</span>
+                <select
+                  className="input"
+                  value={(props.selectedDestination.destination as S3BackupDestination).addressingStyle || 'path-style'}
+                  disabled={props.loadingSettings || props.disableWhileBusy}
+                  onChange={(event) => props.onUpdateDestination((destination) => ({
+                    ...destination,
+                    destination: {
+                      ...(destination.destination as S3BackupDestination),
+                      addressingStyle: (event.currentTarget as HTMLSelectElement).value as S3BackupAddressingStyle,
+                    },
+                  }))}
+                >
+                  <option value="path-style">{t('txt_backup_s3_addressing_path_style')}</option>
+                  <option value="virtual-hosted-style">{t('txt_backup_s3_addressing_virtual_hosted_style')}</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>{t('txt_backup_s3_bucket')}</span>
                 <input
                   className="input"
-                  value={(props.selectedDestination.destination as E3BackupDestination).bucket}
+                  value={(props.selectedDestination.destination as S3BackupDestination).bucket}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       bucket: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}
                 />
               </label>
               <label className="field">
-                <span>{t('txt_backup_e3_region')}</span>
+                <span>{t('txt_backup_s3_region')}</span>
                 <input
                   className="input"
-                  value={(props.selectedDestination.destination as E3BackupDestination).region}
+                  value={(props.selectedDestination.destination as S3BackupDestination).region}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   placeholder="auto"
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       region: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}
                 />
               </label>
               <label className="field">
-                <span>{t('txt_backup_e3_access_key')}</span>
+                <span>{t('txt_backup_s3_access_key')}</span>
                 <input
                   className="input"
-                  value={(props.selectedDestination.destination as E3BackupDestination).accessKeyId}
+                  value={(props.selectedDestination.destination as S3BackupDestination).accessKeyId}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       accessKeyId: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}
                 />
               </label>
               <label className="field">
-                <span>{t('txt_backup_e3_secret_key')}</span>
+                <span>{t('txt_backup_s3_secret_key')}</span>
                 <input
                   className="input"
                   type="password"
-                  value={(props.selectedDestination.destination as E3BackupDestination).secretAccessKey}
+                  value={(props.selectedDestination.destination as S3BackupDestination).secretAccessKey}
                   disabled={props.loadingSettings || props.disableWhileBusy}
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       secretAccessKey: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}
                 />
               </label>
               <label className="field field-span-2">
-                <span>{t('txt_backup_e3_path')}</span>
+                <span>{t('txt_backup_s3_path')}</span>
                 <input
                   className="input"
-                  value={(props.selectedDestination.destination as E3BackupDestination).rootPath}
+                  value={(props.selectedDestination.destination as S3BackupDestination).rootPath}
                   disabled={props.loadingSettings || props.disableWhileBusy}
-                  placeholder="nodewarden/backups"
+                  placeholder=""
                   onInput={(event) => props.onUpdateDestination((destination) => ({
                     ...destination,
                     destination: {
-                      ...(destination.destination as E3BackupDestination),
+                      ...(destination.destination as S3BackupDestination),
                       rootPath: (event.currentTarget as HTMLInputElement).value,
                     },
                   }))}

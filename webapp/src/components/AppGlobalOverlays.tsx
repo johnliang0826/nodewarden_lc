@@ -8,7 +8,11 @@ export interface AppConfirmState {
   message: string;
   danger?: boolean;
   showIcon?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  hideCancel?: boolean;
   onConfirm: () => void;
+  onCancel?: () => void;
 }
 
 interface AppGlobalOverlaysProps {
@@ -24,11 +28,13 @@ interface AppGlobalOverlaysProps {
   onConfirmTotp: () => void;
   onCancelTotp: () => void;
   onUseRecoveryCode: () => void;
+  totpSubmitting: boolean;
   disableTotpOpen: boolean;
   disableTotpPassword: string;
   onDisableTotpPasswordChange: (value: string) => void;
   onConfirmDisableTotp: () => void;
   onCancelDisableTotp: () => void;
+  disableTotpSubmitting: boolean;
 }
 
 export default function AppGlobalOverlays(props: AppGlobalOverlaysProps) {
@@ -40,8 +46,11 @@ export default function AppGlobalOverlays(props: AppGlobalOverlaysProps) {
         message={props.confirm?.message || ''}
         danger={props.confirm?.danger}
         showIcon={props.confirm?.showIcon}
+        confirmText={props.confirm?.confirmText}
+        cancelText={props.confirm?.cancelText}
+        hideCancel={props.confirm?.hideCancel}
         onConfirm={() => props.confirm?.onConfirm()}
-        onCancel={props.onCancelConfirm}
+        onCancel={props.confirm?.onCancel || props.onCancelConfirm}
       />
 
       <ConfirmDialog
@@ -51,12 +60,14 @@ export default function AppGlobalOverlays(props: AppGlobalOverlaysProps) {
         confirmText={t('txt_verify')}
         cancelText={t('txt_cancel')}
         showIcon={false}
+        confirmDisabled={props.totpSubmitting}
+        cancelDisabled={props.totpSubmitting}
         onConfirm={props.onConfirmTotp}
         onCancel={props.onCancelTotp}
         afterActions={(
           <div className="dialog-extra">
             <div className="dialog-divider" />
-            <button type="button" className="btn btn-secondary dialog-btn" onClick={props.onUseRecoveryCode}>
+            <button type="button" className="btn btn-secondary dialog-btn" disabled={props.totpSubmitting} onClick={props.onUseRecoveryCode}>
               {t('txt_use_recovery_code')}
             </button>
           </div>
@@ -66,7 +77,7 @@ export default function AppGlobalOverlays(props: AppGlobalOverlaysProps) {
           <span>{t('txt_totp_code')}</span>
           <input className="input" value={props.totpCode} autoComplete="one-time-code" onInput={(e) => props.onTotpCodeChange((e.currentTarget as HTMLInputElement).value)} />
         </label>
-        <label className="check-line" style={{ marginBottom: 0 }}>
+        <label className="check-line check-line-compact">
           <input type="checkbox" checked={props.rememberDevice} onChange={(e) => props.onRememberDeviceChange((e.currentTarget as HTMLInputElement).checked)} />
           <span>{t('txt_trust_this_device_for_30_days')}</span>
         </label>
@@ -80,6 +91,8 @@ export default function AppGlobalOverlays(props: AppGlobalOverlaysProps) {
         cancelText={t('txt_cancel')}
         danger
         showIcon={false}
+        confirmDisabled={props.disableTotpSubmitting}
+        cancelDisabled={props.disableTotpSubmitting}
         onConfirm={props.onConfirmDisableTotp}
         onCancel={props.onCancelDisableTotp}
       >
